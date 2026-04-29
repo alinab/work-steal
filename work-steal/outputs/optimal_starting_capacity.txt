@@ -1,0 +1,20 @@
+#We tried to measure the size that the buffers grew or shrinked to, idea was that 
+#starting with an optimal size will lead to lesser time to grow and shrink, leading to better throughput.
+#We found most visited size is size 8 (2^3).
+#but this is probably not a significant factor contributing to throughput
+
+=== Capacity histogram (log_size -> visits) ===
+  size=2      (2^1): 499 visits
+  size=4      (2^2): 406231 visits
+  size=8      (2^3): 1838120 visits
+  size=16     (2^4): 871855 visits
+  size=32     (2^5): 26778 visits
+  size=64     (2^6): 992 visits
+  size=128    (2^7): 992 visits
+  size=256    (2^8): 992 visits
+  size=512    (2^9): 992 visits
+  size=1024   (2^10): 992 visits
+  size=2048   (2^11): 992 visits
+  size=4096   (2^12): 991 visits
+  size=8192   (2^13): 991 visits
+  size=16384  (2^14): 992 visits
