@@ -1,10 +1,5 @@
 let warmup_runs = 3
 
-let sequential_sort arr lo hi =
-  let sub = Array.sub arr lo (hi - lo) in
-  Array.sort compare sub;
-  Array.blit sub 0 arr lo (hi - lo)
-
 let merge src dst lo mid hi =
   let i = ref lo in
   let j = ref mid in
@@ -24,6 +19,18 @@ let merge src dst lo mid hi =
     dst.(!k) <- src.(!j); incr j; incr k
   done
 
+let rec mergesort_seq src dst lo hi =
+  if hi - lo <= 1 then
+    dst.(lo) <- src.(lo)
+  else begin
+    let mid = lo + (hi - lo) / 2 in
+    mergesort_seq dst src lo mid;
+    mergesort_seq dst src mid hi;
+    merge src dst lo mid hi
+  end
+
+
+
 let is_sorted arr =
   let n = Array.length arr in
   let ok = ref true in
@@ -35,7 +42,7 @@ let is_sorted arr =
 let rec par_mergesort_ws (ctx : Scheduler.ctx) threshold src dst lo hi =
   if hi - lo <= threshold then begin
     Array.blit src lo dst lo (hi - lo);
-    sequential_sort dst lo hi
+    mergesort_seq src dst lo hi
   end else begin
     let mid       = lo + (hi - lo) / 2 in
     let left_fut  = Scheduler.fork ctx
@@ -50,7 +57,7 @@ let rec par_mergesort_ws (ctx : Scheduler.ctx) threshold src dst lo hi =
 let rec par_mergesort_naive (ctx : Naive_scheduler.ctx) threshold src dst lo hi =
   if hi - lo <= threshold then begin
     Array.blit src lo dst lo (hi - lo);
-    sequential_sort dst lo hi
+    mergesort_seq src dst lo hi
   end else begin
     let mid       = lo + (hi - lo) / 2 in
     let left_fut  = Naive_scheduler.fork ctx
@@ -103,11 +110,11 @@ let run_experiment ~n ~runs =
   Printf.printf "Computing sequential baseline for mergesort n=%d...\n%!" n;
   for _ = 1 to warmup_runs do
     let arr = Array.init n (fun _ -> Random.int 1_000_000) in
-    Array.sort compare arr
+    mergesort_seq arr (Array.copy arr) 0 n
   done;
   let seq_times = Array.init runs (fun _ ->
     let arr = Array.init n (fun _ -> Random.int 1_000_000) in
-    let (_, t) = Benchmark.time (fun () -> Array.sort compare arr) in t
+    let (_, t) = Benchmark.time (fun () -> mergesort_seq arr (Array.copy arr) 0 n) in t
   ) in
   let seq_time = Benchmark.mean seq_times in
   let seq_sd   = Benchmark.std_dev seq_times in

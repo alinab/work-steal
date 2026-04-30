@@ -120,7 +120,7 @@ for col, policy in enumerate(policies):
     ax.set_xlabel('Workers')
     ax.set_xticks(workers_list)
     ax.set_ylabel('Speedup')
-    ax.set_ylim(-0.1, 2.5)
+    ax.set_ylim(-0.1, 5)
     ax.legend(fontsize=7, ncol=2)
     ax.grid(True, alpha=0.3)
     # annotate clipped outliers

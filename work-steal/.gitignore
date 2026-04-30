@@ -1,0 +1,15 @@
+# OCaml / dune
+_build/
+*.cmx
+*.cmi
+*.cmo
+*.o
+*.a
+*.cmxa
+*.cmxs
+
+# dune cache
+.dune/
+
+# misc
+*.log
