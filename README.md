@@ -35,6 +35,8 @@ Video recording:
 │
 └── dune-project  Dune build configuration
 ```
+NOTE: Please ignore the `project-report` folder to the root of the repository.
+It has only been kept for ensuring instructions and LaTeX formats can be easily checked.
 
 ### Building
 
