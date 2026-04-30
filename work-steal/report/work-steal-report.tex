@@ -475,13 +475,13 @@ The takeaways from our benchmarking are:
         of around 3× at 16 workers while naive reaches nearly 6 times - the small task
         count means workers rarely contend on the mutex and the queue
         distributes work efficiently.
-     \item At fine granularity (threshold=20), the situation reverses: work-stealing
-         reaches 4 times speedup while naive drops to under 4 because the high task count
-         causes heavy mutex contention on every push and pop. The steal ratio plots confirm
-         this — at threshold=30 up to 26% of tasks are stolen, reflecting genuine
-         load imbalance as workers exhaust their local queues quickly,
-         while at threshold=20 stealing stays below 2%
-         since each worker has abundant local work.
+     \item At fine granularity (threshold=20), the situation reverses:
+         work-stealing reaches 4 times speedup while naive drops to under 4
+         because the high task count causes heavy mutex contention on every
+         push and pop. The steal ratio plots confirm this -- at threshold=30 up
+         to 26\% of tasks are stolen, reflecting genuine load imbalance as
+         workers exhaust their local queues quickly, while at threshold=20
+         stealing stays below 2\% since each worker has abundant local work.
       \item The throughput plots expose the same effect from a different angle:
           threshold=20 generates more tasks/second for work-stealing but naive
           cannot keep up at that granularity, whereas threshold=25 and threshold=30
@@ -506,27 +506,27 @@ the mutex cost negligible.
 
 The takeaways from our benchmarking are:
 \begin{itemize}
-    \item Work-stealing peaks at 4 workers regardless of threshold — beyond
-    this all configurations degrade as cores compete for the same memory bus,
-    confirming that the bottleneck is memory throughput rather than task distribution.
-    The naive scheduler shows more dramatic threshold sensitivity: at threshold=2000 and
-    threshold=5000 with 2 and 4 workers, several runs deadlocked or livelocked
-    (average times exceeding 5 seconds, clipped from the plot),
-    indicating that coarser tasks combined with low worker counts
-    creates a situation where workers block waiting for tasks that are never released from the queue.
-    \item At 8 and 16 workers both schedulers converge to similar speedups
-     with naive performing slightly worse due to mutex contention on top of memory
-     bus pressure. The steal ratio plots show that mergesort generates higher
-     steal ratios than Fibonacci at the same thresholds — up to 14\% at threshold=5000
-     with 16 workers — reflecting the structural imbalance of mergesort where
-     top-level merge tasks take orders of magnitude longer than leaf tasks,
-     forcing idle workers to steal frequently
-    \item The throughput plots reinforce this: fine-grained tasks (threshold=500)
-     achieve the highest task rate for work-stealing, peaking at around 47,000
-     tasks per second at 4 workers, while naive throughput at the same granularity
-     is lower and drops sharply beyond 4 workers as mutex contention accumulates.
+   \item All configurations peaking at 4 workers and degrading beyond that point.
+       Work-stealing achieves a peak speedup of around 2 at 4 workers —
+       a meaningful improvement over the naive scheduler which peaks at around 1
+       at the same worker count -- demonstrating that dynamic rebalancing is
+       beneficial for the  unbalanced merge tree where top-level tasks take orders
+       of magnitude longer than leaf tasks.
+  \item Beyond 4 workers both schedulers degrade, with work-stealing (random)
+      falling below sequential at 16 workers while round-robin holds marginally
+      above 1, and naive dropping to 0.73–0.81 at 16 workers as mutex contention
+      compounds memory bus pressure. The steal ratio rises consistently with
+      both threshold and worker count, reaching 16\% at threshold=5000 with
+      16 workers under round-robin -- higher than random at the same
+      configuration (14.8) -- reflecting the structural imbalance of the merge
+      tree driving idle workers to steal large pending operations.
+   \item The throughput plots show work-stealing at threshold=500 achieving
+       55,000 tasks per second at 4 workers before degrading, while naive
+       throughput at the same granularity is consistently lower and follows a
+       similar peak-and-drop pattern, both confirming that 4 physical
+       performance cores is the effective parallelism limit for this
+       memory-bound workload.
 \end{itemize}
-
 
 %%===========================================================================
 \subsection{Parallel map benchmarks}
@@ -543,17 +543,17 @@ The takeaways from our benchmarking are:
 \begin{itemize}
     \item The naive scheduler with coarse granularity (threshold=5000) reaches
         nearly 5 times the speedup at 8 workers and continues improving to 4.8
-        at 16 workers — consistently beating every work-stealing configuration
+        at 16 workers -- consistently beating every work-stealing configuration
         beyond 4 workers. This occurs because the naive queue distributes work evenly
         without any rebalancing, and larger tasks fully amortize the mutex overhead.
     \item Work-stealing with threshold=500 shows high variance at 4 and 8 workers
-        in the random policy panel — visible as large error bars — reflecting the
+        in the random policy panel -- visible as large error bars -- reflecting the
         same livelock instability seen in mergesort when many fine-grained tasks
         compete for stealing. The steal ratio plots confirm the benchmark is
         genuinely balanced: even at threshold=5000 with 16 workers the steal
         ratio stays below 10\%, compared to 27\% for Fibonacci at the same
         configuration, meaning workers find enough local work without needing to steal frequently.
-     \item The throughput plots are the most striking — naive at threshold=500
+     \item The throughput plots are the most striking -- naive at threshold=500
          achieves over 1 million tasks per second at 4 workers and sustains this
          through to 16 workers, while work-stealing at the same threshold peaks
          at 1.5 million tasks per second at 8 workers then degrades, suggesting
@@ -561,9 +561,10 @@ The takeaways from our benchmarking are:
          the overhead of failed steal attempts on an already well-balanced workload
          costs more than it saves. THe round-robin scheduler shows notably
          lower variance than random in the throughput plots,
-         trading peak throughput for stability — a pattern consistent across all
+         trading peak throughput for stability -- a pattern consistent across all
          three benchmarks.
  \end{itemize}
+
 % =============================================================================
 
 \section{Reflection on the Use of LLMs}
@@ -628,18 +629,21 @@ in the first place.
 
 The three benchmarks validate the core claims of \cite{chase2005dynamic}
 while revealing important nuances about when work-stealing's advantage
-materialises in practice. Chase and Lev prove that their algorithm is correct
+materialises in practice. We confirm that the Chase and Lev algorithm is correct
 under the assumption that the owner is the only domain operating on the bottom
-end of the deque — our QCheck-Lin and QCheck-STM tests formally verified this
+end of the deque — our QCheck-Lin and QCheck-STM tests formally verify this
 with owner/thief invariants. The steal ratio data directly confirms the paper's
 central efficiency argument: across all benchmarks and configurations at least
-74% of tasks execute locally without cross-domain synchronisation, with
+74\% of tasks execute locally without cross-domain synchronisation, with
 stealing rates as low as 0.1\% for fine-grained balanced workloads. For
 memory-bound unbalanced workloads such as mergesort, work-stealing achieves
-almost double speedup at 4 workers and avoids the mutex contention that causes
-the naive scheduler to deadlock under certain threshold and worker combinations
-— precisely the irregular workload scenario the paper's dynamic array design
-was intended to address.
+nearly 2 times speedup at 4 workers compared to the naive scheduler's
+1.35 times -- dynamic rebalancing allows idle workers to claim large
+top-level merge tasks from busy ones, precisely the irregular
+workload scenario the paper's dynamic array design was intended to address.
+Beyond 4 workers both schedulers degrade as memory bandwidth becomes the
+bottleneck, with the naive scheduler falling to 0.73 times at 16 workers as
+mutex contention compounds memory bus pressure.
 
 For statistically balanced workloads such as prime map and coarse-grained Fibonacci,
 the naive scheduler reaches 5 times speedup at high worker counts, confirming
@@ -656,7 +660,7 @@ and to use monotonically increasing \texttt{top} and \texttt{bottom} indices
 that wrap cyclically through the array, proved elegant in the OCaml port —
 growing and shrinking reduce to single-bit increments and decrements of the
 exponent, and the monotonic \texttt{top} index eliminates the ABA problem that
-required a tag field in the earlier ABP algorithm of \citet{arora1998thread}.
+required a tag field in the earlier ABP algorithm of \cite{arora1998thread}.
 The paper notes in Section 4 that correct memory reclamation of shrunk arrays
 requires a shared buffer pool to prevent a thief from reading a freed array —
 OCaml's garbage collector makes this concern irrelevant, since the GC ensures
