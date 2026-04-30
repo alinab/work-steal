@@ -12,9 +12,10 @@ type 'a result =
     - an index (bottom) to which the next item is pushed to.
     - an index (top) from which an item is stolen after which it
     is incremented.
-    - a circular array of where the entire array is stored within
-      an atomic reference named as the active_array.
-      --- ADD NOTE on the Atomic
+    - a circular array of elements, where the entire array is stored within
+      an atomic reference.
+    - the use of Atomic for top and bottom guarantees that stale/older
+    values are never read.
 *)
 type 'a t = {
     bottom : int Atomic.t;
@@ -41,8 +42,9 @@ let cas_top deque_arr old_top new_top =
 (* Pushes an item into the deque. The important check is that
    if the size of the deque is greater than the size of the underlying
    circular array, then the array is grown and the newly expanded array
-   set to be the underlying one.
-   --- ADD NOTE on the (size - 1).
+   set to be the underlying one. The check with size - 1 ensures that
+   at least one slot available and the older array is never written to
+   beyond its maximum capacity.
    The bottom index is incremented to point to the next slot to which
    an item can be pushed to.
 *)

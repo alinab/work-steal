@@ -13,6 +13,8 @@ and task = Task of (ctx -> unit)
 (* The abstract type ctx is now defined as a type with
    - the current domain/worker id
    - the pool containing of all deques
+   - the random number generator for selecting deques
+   - the steal policy
    *)
 and ctx = {
     pool      : deque_pool;
@@ -28,14 +30,17 @@ and ctx = {
    - pending denotes the counter of unfinished tasks; incremented
      every time a task is added to a deque and decremented when
      a task finishes running
+   - the count for total steals
+   - the total number of tasks completed
+   - the steal policy
    *)
 and deque_pool = {
     deques  : task Deque.t array;
     pending : int Atomic.t;
-    size    : int;          (* number of domains *)
+    size    : int;
     next_worker : int Atomic.t;
     steal_count : int Atomic.t;
-    task_count : int Atomic.t;  (* the total number of tasks completed *)
+    task_count : int Atomic.t;
     steal_policy : steal_policy
 }
 
