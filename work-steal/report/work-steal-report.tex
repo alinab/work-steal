@@ -681,17 +681,37 @@ reclamation — translates cleanly and efficiently to OCaml 5.4's domain-based
 parallelism model.
 
 
-With more time, using profiling tools for cache and memory analysis would have
-helped show the details of memory shrinking and expanding for existing
-benchmarks; additional benchmarking programs would have broadened our evaluation.
-We have attempted an implementation of circular array allocation from a shared
-buffer pool as described in section 4 of \cite{chase2005dynamic}. Some initial
-outputs from comparing memory manangement after deque shrinking/growing via the
-OCaml GC vs using a shared buffer memory pool are here:
-(\href{https://github.com/alinab/work-steal/blob/shared-mem-pool-work/work-steal/outputs/mergesort_shrink_shared0_fixed_workers.png}{a848335}),
-(\href{https://github.com/alinab/work-steal/blob/shared-mem-pool-work/work-steal/outputs/mergesort_shrink_shared0_resize_ops.png}{a848335}),
-(\href{https://github.com/alinab/work-steal/blob/shared-mem-pool-work/work-steal/outputs/mergesort_shrink_shared0_varying_workers.png}{a848335}).
-The outputs show <> . This work has also brought up questions such as <>
+With more time, profiling tools for cache and memory analysis would have helped
+characterise the memory shrinking and expansion behaviour in existing benchmarks;
+additional benchmarking programs would have broadened the evaluation.
+We attempted an implementation of circular array allocation from a shared buffer
+pool as described in Section~4 of~\cite{chase2005dynamic}, combined with the
+shrink policies from Section~3. Some initial outputs are available
+(\href{https://github.com/alinab/work-steal/blob/shared-mem-pool-work/work-steal/outputs/benchmark_plot_fixed_workers.png}{6df58e8}).
+A few observations and their possible explanations follow:
+
+\begin{enumerate}[nosep]
+    \item Using the pool allocator reduces total memory allocation
+    (\texttt{minor\_words}) compared to GC mode across all shrink policies,
+    indicating the pool reuses backing memory rather than allocating fresh arrays.
+    \item The \texttt{no\_shrink} policy grows only during warmup until peak
+    deque capacity is reached, after which allocation pressure drops, so GC
+    pressure is front-loaded. The peak array gets promoted to the major heap
+    due to its long lifetime, which explains the significantly elevated major
+    word count for \texttt{no\_shrink}.
+    \item The \texttt{multi} policy aggressively shrinks to the lowest suitable
+    size, causing grow--shrink oscillation and a high total number of grows.
+    Despite potentially lower instantaneous memory usage, cumulative allocation
+    (\texttt{minor\_words}) is therefore high: the motivation of releasing unused
+    capacity is undermined by the pool needing to grow back almost immediately.
+\end{enumerate}
+
+This work also raises questions about how the number of grow -- shrink cycles,
+combined with the choice of shrink policy, impacts GC allocation pressure and
+total memory allocated. When comparing algorithms, it is therefore important to
+consider not only throughput and instantaneous memory usage but also how the GC
+manages the resulting memory patterns.
+
 We stress that this implementation requires refinement and that we would like to
 continue working on this in the near future. Comparing such an implementation
 against an equivalent set of schedulers (work-stealing, naive) in Rust using
