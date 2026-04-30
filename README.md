@@ -4,6 +4,10 @@ An implementation of the Chase-Lev dynamic circular work-stealing deque
 ([SPAA 2005](https://dl.acm.org/doi/10.1145/1073970.1073974)) in OCaml 5,
 together with a parallel task scheduler and benchmarks.
 
+Video recording:
+- [keynote format](https://drive.google.com/file/d/19eqIB8RPyEz6Xw6W1r6-Pw07fR2Nsm2C/view?usp=drive_link)
+- [movie format](https://drive.google.com/file/d/1quegUJp9N02R4N6ypsd-KhFxsVBQ-3SA/view?usp=drive_link)
+
 ### Repository structure
 
 ```
