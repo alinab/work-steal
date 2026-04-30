@@ -1,0 +1,57 @@
+# =========================
+# OCaml / Dune build output
+# =========================
+_build/
+*.install
+
+# Compiled files
+*.cmx
+*.cmi
+*.cmo
+*.cmxa
+*.cmxs
+*.o
+*.a
+
+# Bytecode / native executables
+*.byte
+*.native
+
+# =========================
+# Logs / temp files
+# =========================
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# =========================
+# Python (you had plotting scripts)
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+
+# =========================
+# OS-specific files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Misc
+# =========================
+*.out
+*.exe
