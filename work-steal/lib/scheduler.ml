@@ -14,13 +14,11 @@ and task = Task of (ctx -> unit)
    - the current domain/worker id
    - the pool containing of all deques
    - the random number generator for selecting deques
-   - the steal policy
    *)
 and ctx = {
     pool      : deque_pool;
     worker_id : int;
     rng       : Random.State.t;
-    steal_policy : steal_policy
 }
 
 (* A deque_pool is a type containing:
@@ -48,7 +46,6 @@ let make_ctx pool worker_id = {
     pool = pool ;
     worker_id = worker_id;
     rng       = Random.State.make_self_init ();
-    steal_policy = pool.steal_policy
 }
 
 let create_pool n policy = {
@@ -76,7 +73,7 @@ let try_steal_from ctx victim =
 
 (* Updated: stealing across domains now occurs according to the policy set *)
 let try_steal ctx =
-  match ctx.steal_policy with
+  match ctx.pool.steal_policy with
   | Random ->
       let victim = ref (Random.State.int ctx.rng ctx.pool.size) in
       while !victim = ctx.worker_id do
