@@ -546,13 +546,14 @@ The takeaways from our benchmarking are:
         at 16 workers -- consistently beating every work-stealing configuration
         beyond 4 workers. This occurs because the naive queue distributes work evenly
         without any rebalancing, and larger tasks fully amortize the mutex overhead.
-    \item Work-stealing with threshold=500 shows high variance at 4 and 8 workers
+    \item Work-stealing shows high variance at 4 and 8 workers
         in the random policy panel -- visible as large error bars -- reflecting the
         same livelock instability seen in mergesort when many fine-grained tasks
         compete for stealing. The steal ratio plots confirm the benchmark is
-        genuinely balanced: even at threshold=5000 with 16 workers the steal
-        ratio stays below 10\%, compared to 27\% for Fibonacci at the same
-        configuration, meaning workers find enough local work without needing to steal frequently.
+        genuinely balanced: even at \texttt{threshold=5000} with 16 workers
+        the steal ratio stays just below 10\%, well below the mergesort steal
+        ratio of 14 to 16\% at the same worker count, confirming that uniform
+        chunk costs keep workers productive locally without frequent stealing.
      \item The throughput plots are the most striking -- naive at threshold=500
          achieves over 1 million tasks per second at 4 workers and sustains this
          through to 16 workers, while work-stealing at the same threshold peaks
@@ -685,7 +686,7 @@ With more time, profiling tools for cache and memory analysis would have helped
 characterise the memory shrinking and expansion behaviour in existing benchmarks;
 additional benchmarking programs would have broadened the evaluation.
 We attempted an implementation of circular array allocation from a shared buffer
-pool as described in Section~4 of~\cite{chase2005dynamic}, combined with the
+pool as described in Section~4 of \cite{chase2005dynamic}, combined with the
 shrink policies from Section~3. Some initial outputs are available
 (\href{https://github.com/alinab/work-steal/blob/shared-mem-pool-work/work-steal/outputs/benchmark_plot_fixed_workers.png}{6df58e8}).
 A few observations and their possible explanations follow:
