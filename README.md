@@ -32,6 +32,36 @@ together with a parallel task scheduler and benchmarks.
 └── dune-project  Dune build configuration
 ```
 
+## Shrink Policies
+
+### `Simple` — Standard
+Shrinks the underlying circular array if the number of elements is less than `array size / K`, where `K ≥ 3`.
+
+---
+
+### `No_Copy` — Shrink Without Full Copying
+**Strategy:**
+- When growing, a back-pointer (`a.prev`) is stored to the smaller array, along with a
+  `low_water_mark` recording the lowest `bottom` index ever written into the big array
+  while it was active.
+- On shrink, the smaller array is reused. Only indices in the range `[lwm, bottom)` were
+  mutated while the big array was live, so only those slots need to be copied back.
+
+---
+
+### `Multi` — Combined Multiple Shrinks
+**Strategy:**
+
+Walk the chain of back-pointers (`a → a.prev → a.prev.prev → …`) to find the smallest
+ancestor whose size can still hold all live elements (i.e. `size > num_elements`, with
+one cell unused per the paper). Track the minimum LWM across every skipped array.
+
+---
+
+### `No_Shrink` — Never Shrinks
+Does not shrink; only grows. 
+
+
 ### Building
 
 Requires OCaml 5.4 and opam.

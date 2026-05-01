@@ -176,7 +176,7 @@ let run_experiment ~n ~runs =
   let steal_policies      = [Scheduler.Random; Scheduler.RoundRobin] in
   (* let shrink_policies     = [Scheduler.No_shrink; Scheduler.Simple; Scheduler.No_copy; Scheduler.Multi] in *)
   let shrink_policies     = [Simple] in
-  let starting_array_sizes = [0; 3; 18] in
+  let starting_array_sizes = [0;] in (*capacity 18 is taking a lot of time*)
   let pool_modes = [GC; Pool ] in
 
   (* sequential baseline *)
@@ -234,7 +234,7 @@ let run_experiment_shrinks ~n ~runs =
   let steal_policies      = [RoundRobin] in
   (* let shrink_policies     = [No_shrink;Simple; No_copy; Multi] in *)
   let shrink_policies     = [No_shrink; No_copy; Multi;Simple] in
-  let starting_array_sizes = [0;3;18] in
+  let starting_array_sizes = [0] in  (*capacity 18 is taking a lot of time*)
   let pool_modes = [GC; Pool ] in
 
 
